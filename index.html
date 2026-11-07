@@ -104,7 +104,6 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
     <div><b id="m">--</b><span>minutes</span></div>
     <div><b id="s">--</b><span>seconds</span></div>
   </div>
-  <iframe name="notifyFrame" title="" hidden></iframe>
   <form id="notify">
     <input id="email" type="email" required placeholder="Your email" autocomplete="email" aria-label="Email address">
     <button>Notify me</button>
@@ -206,8 +205,7 @@ footer .wrap{display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px}
 /* ===== DROP SETTINGS: edit these lines ===== */
 const DROP_DATE   = "2026-12-05T10:00:00+02:00"; // drop day and time (South Africa time)
 const FORCE_OPEN  = false;                       // true = open the shop for everyone now
-const NOTIFY_URL  = "";                          // your email service sign-up link (Mailchimp, MailerLite, Brevo, Formspree)
-const NOTIFY_FIELD = "EMAIL";                    // EMAIL for Mailchimp, fields[email] for MailerLite, email for Brevo and Formspree
+const NOTIFY_URL  = "https://formspree.io/f/maeezdor";                          // paste your Formspree link here, e.g. https://formspree.io/f/abcdwxyz
 const OWNER_HASH  = "a0aace3080977d89f9a503f7470fea49e6322512494c9a051b842ddb86e03173"; // hash of THORNS2026
 /* =========================================== */
 
@@ -240,17 +238,17 @@ $("ownerForm").addEventListener("submit", async e => {
     openShop();
   } else { $("msg").textContent = "Wrong code."; }
 });
-$("notify").addEventListener("submit", e => {
+$("notify").addEventListener("submit", async e => {
   e.preventDefault();
-  const msg = $("notifyMsg");
-  if (!NOTIFY_URL){ msg.textContent = "Preview only: email sign-up is not connected yet."; return; }
-  const f = document.createElement("form");
-  f.method = "POST"; f.action = NOTIFY_URL; f.target = "notifyFrame"; f.style.display = "none";
-  const i = document.createElement("input");
-  i.name = NOTIFY_FIELD; i.value = $("email").value;
-  f.appendChild(i); document.body.appendChild(f); f.submit(); f.remove();
-  msg.textContent = "You are on the list. We will email you on drop day.";
-  e.target.reset();
+  const msg = $("notifyMsg"), form = e.target;
+  if (!NOTIFY_URL){ msg.textContent = "Email sign-up is not connected yet."; return; }
+  msg.textContent = "Saving...";
+  try{
+    const r = await fetch(NOTIFY_URL,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({email:$("email").value,source:"drop page"})});
+    if(!r.ok) throw new Error();
+    msg.textContent = "You are on the list. We will email you on drop day.";
+    form.reset();
+  }catch(_){ msg.textContent = "Could not save your email. Please try again."; }
 });
 
 let owner = false;
