@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>benedictio — the drop is coming</title>
+<meta name="description" content="benedictio clothing. Crown of Thorns. Limited edition drop.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=UnifrakturCook:wght@700&family=Inter+Tight:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#1c1416;--bone:#f4f0e9;--blood:#5b0f1b;--brass:#b08d57;--hot:#ff4a1c;--body:'Inter Tight',system-ui,sans-serif;--black:'UnifrakturCook','Times New Roman',serif}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--body);color:var(--bone);min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;-webkit-font-smoothing:antialiased;background:radial-gradient(circle at 50% 35%,#7a1424 0%,var(--blood) 40%,var(--ink) 100%)}
+:focus-visible{outline:3px solid var(--brass);outline-offset:3px}
+.tag{border:1px solid var(--brass);color:var(--brass);padding:6px 16px;font-weight:700;margin-bottom:24px}
+h1{font-family:var(--black);font-size:clamp(56px,14vw,160px);line-height:.9;font-weight:700}
+p{max-width:40ch;margin:20px auto 32px;font-size:19px;opacity:.9}
+#count{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+#count div{min-width:84px;padding:14px 10px;border:2px solid var(--bone)}
+#count b{display:block;font-size:40px;line-height:1;font-variant-numeric:tabular-nums}
+#count span{font-size:14px;opacity:.8}
+#notify{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:32px auto 0;max-width:460px}
+#notify input{flex:1 1 220px;padding:14px;border:2px solid var(--bone);background:rgba(0,0,0,.35);color:var(--bone);font:inherit;border-radius:0}
+#notify input::placeholder{color:#cdbfc2}
+#notify button{padding:14px 24px;border:2px solid var(--hot);background:var(--hot);color:#fff;font:inherit;font-weight:700;cursor:pointer;border-radius:0}
+#notifyMsg{min-height:1.4em;margin-top:10px;font-weight:500}
+.follow{margin-top:24px;font-size:15px;opacity:.85}
+.follow a{font-weight:700}
+</style>
+</head>
+<body>
+  <div class="tag">Limited edition Christmas drop</div>
+  <h1>The drop is coming</h1>
+  <p>Crown of Thorns by benedictio, with a Christmas discount to honour the birth of Christ. The sale ends 31 December. Once it sells out, it does not come back.</p>
+  <div id="count" aria-live="polite">
+    <div><b id="d">--</b><span>days</span></div>
+    <div><b id="h">--</b><span>hours</span></div>
+    <div><b id="m">--</b><span>minutes</span></div>
+    <div><b id="s">--</b><span>seconds</span></div>
+  </div>
+  <form id="notify">
+    <input id="email" type="email" required placeholder="Your email" autocomplete="email" aria-label="Email address">
+    <button>Notify me</button>
+  </form>
+  <div id="notifyMsg" aria-live="polite"></div>
+  <p class="follow">Follow <a href="https://instagram.com/benedictio.clth" target="_blank" rel="noopener">Instagram</a> or <a href="https://tiktok.com/@benedictio.clth" target="_blank" rel="noopener">TikTok</a>.</p>
+
+<script>
+/* ===== DROP SETTINGS ===== */
+const DROP_DATE  = "2026-12-05T10:00:00+02:00"; // drop day and time (South Africa time)
+const NOTIFY_URL = "https://formspree.io/f/maeezdor";
+/* ========================= */
+
+const $ = id => document.getElementById(id);
+let opening = false;
+
+async function goToShop(){
+  if (opening) return; opening = true;
+  try{
+    const r = await fetch("shop.html",{method:"HEAD",cache:"no-store"});
+    if (r.ok){ location.replace("shop.html"); return; }
+  }catch(_){}
+  $("notifyMsg").textContent = "The shop is opening now. One moment...";
+  opening = false;
+}
+function tick(){
+  const left = new Date(DROP_DATE) - Date.now();
+  if (left <= 0){ ["d","h","m","s"].forEach(i=>$(i).textContent="00"); goToShop(); return; }
+  const p = n => String(n).padStart(2,"0");
+  $("d").textContent = p(Math.floor(left/864e5));
+  $("h").textContent = p(Math.floor(left/36e5)%24);
+  $("m").textContent = p(Math.floor(left/6e4)%60);
+  $("s").textContent = p(Math.floor(left/1e3)%60);
+}
+tick(); setInterval(tick,1000);
+
+$("notify").addEventListener("submit", async e => {
+  e.preventDefault();
+  const msg = $("notifyMsg"), form = e.target;
+  if (!NOTIFY_URL){ msg.textContent = "Email sign-up is not connected yet."; return; }
+  msg.textContent = "Saving...";
+  try{
+    const r = await fetch(NOTIFY_URL,{method:"POST",headers:{"Content-Type":"application/json",Accept:"application/json"},body:JSON.stringify({email:$("email").value,source:"drop page"})});
+    if(!r.ok) throw new Error();
+    msg.textContent = "You are on the list. We will email you on drop day.";
+    form.reset();
+  }catch(_){ msg.textContent = "Could not save your email. Please try again."; }
+});
+</script>
+</body>
+</html>
